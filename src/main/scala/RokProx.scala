@@ -4,9 +4,9 @@ import akka.actor.{ ActorSystem, IO, ActorRef, Props, IOManager, Actor, FSM }
 import akka.util.ByteString
 import java.net.InetSocketAddress
 import scala.collection.mutable
-import java.util.UUID
-import scala.util.Try
-import scala.concurrent.duration._
+import com.eaio.uuid.UUID
+import akka.util.{ FiniteDuration, Duration }
+import akka.util.duration._
 
 /**
   * Testing fault tolerance in a distributed system is hard. This is a tool to assist in the testing. In 
@@ -62,10 +62,10 @@ object RokProx {
       def build( implicit system :ActorSystem ) :RokProxy = {
         val props = Props(
           new RokProxyActor(
-            sourceHost = b._source.get.split(":")(0),
-            sourcePort = b._source.get.split(":")(1).toInt,
-            targetHost = b._target.get.split(":")(0),
-            targetPort = b._target.get.split(":")(1).toInt ) )
+            sourceHost = b._source.get.split(':')(0),
+            sourcePort = b._source.get.split(':')(1).toInt,
+            targetHost = b._target.get.split(':')(0),
+            targetPort = b._target.get.split(':')(1).toInt ) )
 
         val proxy = system.actorOf( props, name = b._name.get )
 
