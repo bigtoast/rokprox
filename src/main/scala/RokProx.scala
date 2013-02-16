@@ -62,10 +62,10 @@ object RokProx {
       def build( implicit system :ActorSystem ) :RokProxy = {
         val props = Props(
           new RokProxyActor(
-            sourceHost = b._source.get.split(":")(0),
-            sourcePort = b._source.get.split(":")(1).toInt,
-            targetHost = b._target.get.split(":")(0),
-            targetPort = b._target.get.split(":")(1).toInt ) )
+            sourceHost = b._source.get.split(':')(0),
+            sourcePort = b._source.get.split(':')(1).toInt,
+            targetHost = b._target.get.split(':')(0),
+            targetPort = b._target.get.split(':')(1).toInt ) )
 
         val proxy = system.actorOf( props, name = b._name.get )
 
