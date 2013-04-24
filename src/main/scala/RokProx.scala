@@ -101,6 +101,7 @@ object RokProx {
 
   }
 
+  /** Set of bidirectional connections for a single proxy. */
   private[rokprox] class ConnectionSet( 
       downStream :mutable.Map[UUID,Connection] = mutable.Map.empty[UUID,Connection], 
       upStream   :mutable.Map[UUID,Connection] = mutable.Map.empty[UUID,Connection] 

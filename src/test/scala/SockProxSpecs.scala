@@ -44,7 +44,6 @@ class SockProxSpecs( _system :ActorSystem ) extends TestKit(_system) with WordSp
   			expectMsgPF(dur) {
   				case IO.Write(_, bytes) =>
   					bytes should be (ByteString("hello nurse"))
-  					// ding ding
   			}
   		}
   	}
