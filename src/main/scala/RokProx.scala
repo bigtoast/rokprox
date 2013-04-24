@@ -85,19 +85,19 @@ object RokProx {
   private[rokprox] object RokProxyMessage {
 
     /** proxy specific commands */
-    case object Break extends RokProxyMessage
-    case class Interrupt( duration :Duration ) extends RokProxyMessage
-    case class Pause( duration :Duration ) extends RokProxyMessage
-    case object Restore extends RokProxyMessage
-    case object Shutdown extends RokProxyMessage
-    case object GetAll extends RokProxyMessage
+    case class Interrupt( duration :Duration )  extends RokProxyMessage
+    case class Pause( duration :Duration )      extends RokProxyMessage
+    case object Break     extends RokProxyMessage
+    case object Restore   extends RokProxyMessage
+    case object Shutdown  extends RokProxyMessage
+    case object GetAll    extends RokProxyMessage
 
     /** connection specific commands */
-    case class GetCxn( cxnId :String ) extends RokProxyMessage
+    case class GetCxn( cxnId :String )    extends RokProxyMessage
     case class PauseCxn(cxnId :String, duration :Duration ) extends RokProxyMessage
     case class InterruptCxn(cxnId :String, duration :Duration ) extends RokProxyMessage
     case class RestoreCxn(cxnId :String ) extends RokProxyMessage
-    case class BreakCxn(cxnId :String ) extends RokProxyMessage
+    case class BreakCxn(cxnId :String )   extends RokProxyMessage
 
   }
 
@@ -437,6 +437,7 @@ object RokProx {
   }
 
   def main( args :Array[String] ) = {
+
     val config = """
     {
       akka {
@@ -447,12 +448,12 @@ object RokProx {
           transport = "akka.remote.netty.NettyRemoteTransport"
           netty {
             hostname = "127.0.0.1"
-            port = 2552
+            port = %s
           }
        }
       }
     }
-    """
+    """.format( args.toSeq.headOption.getOrElse(2552) )
 
     val sys = ActorSystem("rokprox", ConfigFactory.parseString(config))
 
