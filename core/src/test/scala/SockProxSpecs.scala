@@ -2,6 +2,7 @@ package com.github.bigtoast.rokprox
 
 import org.scalatest._
 import org.scalatest.matchers.ShouldMatchers
+import com.ticketfly.pillage._
 
 import RokProx._
 
@@ -16,6 +17,8 @@ class SockProxSpecs( _system :ActorSystem ) extends TestKit(_system) with WordSp
 
 	def this() = this(ActorSystem("testers"))
 
+  val stats = new StatsContainerImpl( new HistogramMetricFactory )
+
 	implicit val dur = 2 seconds
 
 	override def afterAll {
@@ -27,7 +30,7 @@ class SockProxSpecs( _system :ActorSystem ) extends TestKit(_system) with WordSp
   			val hello = ByteString("hello")
   			val nurse = ByteString(" nurse")
   			// SocketHandle( owner, ioManager )
-  			val paused = PausedSock( null, null, true )
+  			val paused = PausedSock("prox", null, null, true, stats )
 
   			paused.buffered should be (ByteString.empty)
 
@@ -37,7 +40,7 @@ class SockProxSpecs( _system :ActorSystem ) extends TestKit(_system) with WordSp
   		}
 
   		"transition to open and flush bytes on restore" in {
-  			val paused = PausedSock( null, SocketHandle(null, testActor), true )
+  			val paused = PausedSock("prox", null, SocketHandle(null, testActor), true, stats )
 
   			val open = paused.write(ByteString("hello nurse")).restore
 

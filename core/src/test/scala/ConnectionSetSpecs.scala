@@ -2,6 +2,7 @@ package com.github.bigtoast.rokprox
 
 import org.scalatest._
 import org.scalatest.matchers.ShouldMatchers
+import com.ticketfly.pillage._
 
 import RokProx._
 
@@ -43,14 +44,15 @@ class ConnectionSetSpecs extends WordSpec with ShouldMatchers with BeforeAndAfte
 
 	"A connection set" should {
 		"accept a new connection" in {
+      val stats = new StatsContainerImpl( new HistogramMetricFactory ) 
 			val dummyRef = TestActorRef( new Actor { def receive = { case _ => } } )
-			val set = new ConnectionSet
+			val set = new ConnectionSet( stats )
 			val source = SocketHandle(dummyRef, dummyRef)
 			val target = SocketHandle(dummyRef,dummyRef)
 
 			source.uuid should not be (target.uuid)
 			
-			val conn = Connection("prox", "sourceHost", source, "targetHost", target)
+			val conn = Connection("prox", "sourceHost", source, "targetHost", target, stats)
 
 			set should have size 0
 
