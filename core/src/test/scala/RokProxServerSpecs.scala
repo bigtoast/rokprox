@@ -3,13 +3,10 @@ package com.github.bigtoast.rokprox
 import org.scalatest._
 import org.scalatest.matchers.ShouldMatchers
 
-import akka.testkit.{ TestKit, TestActorRef }
-import akka.actor.{ ActorRef, IO, Actor, ActorSystem, Props, IOManager }
-import akka.dispatch.Await
-import akka.util.ByteString
-import akka.util.duration._
-import IO._
-import java.net.InetSocketAddress
+import akka.testkit.TestKit
+import akka.actor.ActorSystem
+import scala.concurrent.Await
+import scala.concurrent.duration._
 
 class RokProxServerSpecs( _system :ActorSystem ) extends TestKit(_system) with WordSpec with ShouldMatchers with BeforeAndAfterAll  {
 
@@ -17,10 +14,10 @@ class RokProxServerSpecs( _system :ActorSystem ) extends TestKit(_system) with W
 
   "RokProxServer" should {
     "accept a connection" in {
-      object server extends Thread { override def run = RokProx.main( Array("3456") ) }
+      object server extends Thread { override def run = RokProx.main( Array("1234") ) }
       server.start
 
-      val client = RokProx.client("127.0.0.1:3456").build
+      val client = RokProx.client("127.0.0.1:1234").build
       val res    = Await.result( client.proxies, 2 seconds )
       res should be (Nil)
       server.stop

@@ -9,7 +9,7 @@ object BuildSettings {
 
   val buildVersion = "0.2.2"
 
-  val buildScalaVersion = "2.9.2"
+  val buildScalaVersion = "2.10.2"
 
   val buildSettings = Project.defaultSettings ++ Seq (
     organization := buildOrganization,
@@ -57,9 +57,9 @@ object RokProxBuild extends Build {
 
   val deps = Seq (
         "com.ticketfly"     % "pillage-core"    % "56.0",
-        "com.typesafe.akka" % "akka-actor"      % "2.0.5",
-        "com.typesafe.akka" % "akka-remote"     % "2.0.5",
-        "com.typesafe.akka" % "akka-testkit"    % "2.0.5" % "test",
+        "com.typesafe.akka" %% "akka-actor"      % "2.2.0",
+        "com.typesafe.akka" %% "akka-remote"     % "2.2.0",
+        "com.typesafe.akka" %% "akka-testkit"    % "2.2.0" % "test",
         "org.scalatest"     %% "scalatest"      % "1.9.1" % "test",
         "junit" % "junit"   % "4.9"             % "test",
         "com.novocode"      % "junit-interface" % "0.8"   % "test->default"
@@ -70,9 +70,9 @@ object RokProxBuild extends Build {
     base     = file("."),
     settings = buildSettings ).aggregate(core, client)
 
-  lazy val core = Project( 
-    id       = "core", 
-    base     = file("core"), 
+  lazy val core = Project(
+    id       = "core",
+    base     = file("core"),
     settings = buildSettings ++ assemblySettings ).settings(
       name      := "rokprox",
       mainClass := Some("com.github.bigtoast.rokprox.RokProx"),
@@ -99,5 +99,5 @@ object RokProxBuild extends Build {
           ( folder / "bin" ).listFiles foreach { _.setExecutable( true, false ) }
       }
     ).dependsOn(core)
-  
+
 }

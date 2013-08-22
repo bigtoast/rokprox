@@ -4,20 +4,21 @@ import akka.actor.{ ActorSystem, ActorRef, Props }
 import java.util.concurrent.CountDownLatch
 import com.typesafe.config.ConfigFactory
 import com.ticketfly.pillage._
-import akka.util.FiniteDuration
-import akka.dispatch.Future
+import scala.concurrent.Future
+import scala.concurrent.duration.FiniteDuration
+import java.util
 
 /**
-  * Testing fault tolerance in a distributed system is hard. This is a tool to assist in the testing. In 
-  * a test harness you can start a proxy to a component and control the flow of bytes between your code 
-  * and the component.  
+  * Testing fault tolerance in a distributed system is hard. This is a tool to assist in the testing. In
+  * a test harness you can start a proxy to a component and control the flow of bytes between your code
+  * and the component.
   *
   * {{{
   * val proxy = RokProx.proxy("zk-proxy").from("localhost:8900").to("localhost:8090").build
-  * 
+  *
   * proxy.break                  // break any existing connections
   * proxy.interrupt              // interrupt flow of bytes by dropping them
-  * proxy.interrupt( 2 seconds ) // drop bytes for two seconds 
+  * proxy.interrupt( 2 seconds ) // drop bytes for two seconds
   * proxy.restore                // restore stream of bytes..
   * proxy.pause                  // break stream of bytes, while buffering them indefinitely
   * proxy.restore                // restore stream of bytes, flushing all buffered bytes
@@ -46,9 +47,9 @@ object RokProx {
   private[rokprox] trait SET
   private[rokprox] trait UNSET
 
-  class RokProxyBuilder[N,S,T,C]( 
+  class RokProxyBuilder[N,S,T,C](
     private[rokprox] val _name   :Option[String],
-    private[rokprox] val _source :Option[String], 
+    private[rokprox] val _source :Option[String],
     private[rokprox] val _target :Option[String],
     private[rokprox] val _server :Option[ActorRef],
     private[rokprox] val _stats  :Option[StatsContainer] ) {
@@ -65,7 +66,7 @@ object RokProx {
       * traffic to */
     def to( t :String )   = new RokProxyBuilder[N,S,SET,C](_name, _source, Some(t), _server, _stats)
 
-    /** add an optional stats container to collect proxy stats. If one is not provided an internal one will be 
+    /** add an optional stats container to collect proxy stats. If one is not provided an internal one will be
       * created. This enables use of multiple proxies to share a container */
     def stats( s :StatsContainer ) = new RokProxyBuilder[N,S,T,C](_name, _source, _target, _server, Some(s))
 
@@ -119,21 +120,19 @@ object RokProx {
 
 
     val config = """
-      {
-        akka {
-          actor {
-            provider = "akka.remote.RemoteActorRefProvider"
-          }
-          remote {
-            transport = "akka.remote.netty.NettyRemoteTransport"
-            netty {
-              hostname = "127.0.0.1"
-              port = %s
-            }
-         }
-        }
-      }
-                 """.format( args.toSeq.headOption.getOrElse(2552) )
+       |akka {
+       |  actor {
+       |    provider = "akka.remote.RemoteActorRefProvider"
+       |  }
+       |  remote {
+       |    enabled-transports = ["akka.remote.netty.tcp"]
+       |    netty.tcp {
+       |      hostname = "127.0.0.1"
+       |      port = %s
+       |    }
+       | }
+       |}
+       |""".stripMargin.format( args.toSeq.headOption.getOrElse(2552) )
 
     val stats = new AsyncStatsContainer( new StatsContainerImpl( new HistogramMetricFactory ) )
 

@@ -3,21 +3,24 @@ package com.github.bigtoast
 
 import akka.actor.{Props, ActorSystem, ActorRef }
 import akka.pattern.ask
-import akka.util.{ FiniteDuration, Duration, Timeout }
-import akka.util.duration._
+import scala.concurrent.duration._
 import com.typesafe.config.ConfigFactory
 import com.ticketfly.pillage._
+import scala.concurrent.duration.{Duration, FiniteDuration}
+import akka.util.Timeout
+import akka.util.Timeout._
+import java.util.Random
 
 /**
- * Testing distributed code is hard. Writing tests is inherently difficult and testing 
+ * Testing distributed code is hard. Writing tests is inherently difficult and testing
  * for specific types of network failure can be very difficult. Mocking, in my opinion,
- * is not a valid solution as you are not testing against reality. The purpose of this 
- * library is to proxy network connections and provide a programmable api to control 
- * flow through the proxies. 
+ * is not a valid solution as you are not testing against reality. The purpose of this
+ * library is to proxy network connections and provide a programmable api to control
+ * flow through the proxies.
  *
  * Initially we want to start a proxy that will listen on a port, when a connection
- * to that port is made a connection handler will recieve the connection and open 
- * a connection to the target server. 
+ * to that port is made a connection handler will recieve the connection and open
+ * a connection to the target server.
  *
  * There are two types of streams that should be available through the api. We should
  * be able to access a single connection proxy which should not affect other connection
@@ -56,23 +59,23 @@ package object rokprox {
           implicit val to = Timeout(5 seconds)
 
           /** helper method */
-          def get[R]( msg :RokProxyMessage, dur :Duration )( implicit m :Manifest[R] ) = 
-            ask( proxy, msg )( dur + 1.second ).mapTo[R]
+          def get[R]( msg :RokProxyMessage, dur :Duration )( implicit m :Manifest[R] ) =
+            ask( proxy, msg )( (dur + 1.second).toMillis ).mapTo[R]
 
           val name = b._name.get
 
           def break = proxy ! Break
 
-          def interrupt( duration :FiniteDuration ) = 
+          def interrupt( duration :FiniteDuration ) =
             get[InterruptedStat]( Interrupt( duration ), duration )
 
           def interrupt =
             proxy ! Interrupt( Duration.Inf )
 
-          def pause( duration :FiniteDuration ) = 
+          def pause( duration :FiniteDuration ) =
             get[PausedStat]( Pause( duration ), duration )
 
-          def pause = 
+          def pause =
             proxy ! Pause( Duration.Inf )
 
           def restore = get[ProxyStat]( Restore, to.duration )
@@ -84,28 +87,28 @@ package object rokprox {
               container.asInstanceOf[AsyncStatsContainer].shutdown
           }
 
-          def cxn( cxnId :String ) = 
+          def cxn( cxnId :String ) =
             ask( proxy, GetCxn( cxnId ) ).mapTo[CxnStat]
 
-          def cxns = 
+          def cxns =
             ask( proxy, GetAll ).mapTo[Seq[CxnStat]]
 
-		      def interruptCxn( cxnId :String, duration :FiniteDuration ) = 
+		      def interruptCxn( cxnId :String, duration :FiniteDuration ) =
             get[InterruptedCxnStat]( InterruptCxn(cxnId,duration), duration )
 
-          def interruptCxn( cxnId :String ) = 
+          def interruptCxn( cxnId :String ) =
             proxy ! InterruptCxn( cxnId, Duration.Inf )
 
-		      def pauseCxn( cxnId :String, duration :FiniteDuration ) = 
+		      def pauseCxn( cxnId :String, duration :FiniteDuration ) =
             get[PausedCxnStat]( PauseCxn(cxnId,duration), duration )
 
-          def pauseCxn( cxnId :String ) = 
+          def pauseCxn( cxnId :String ) =
             proxy ! PauseCxn(cxnId, Duration.Inf)
 
-		      def breakCxn( cxnId :String ) = 
+		      def breakCxn( cxnId :String ) =
             get[Unit]( BreakCxn(cxnId), to.duration )
 
-		      def restoreCxn( cxnId :String ) = 
+		      def restoreCxn( cxnId :String ) =
             get[CxnStat](RestoreCxn(cxnId), to.duration )
 
         }
@@ -115,24 +118,24 @@ package object rokprox {
     private[rokprox] def create( _name :String, server :ActorRef ) = new RokProxy {
 
       implicit val to = Timeout(5 seconds)
-      implicit val defaultDur = to.duration.asInstanceOf[FiniteDuration]
+      implicit val defaultDur = to.duration
 
     	val name = _name
 
 			def send( msg : RokProxyMessage ) = server ! RokProxyServerMessage.ProxyMessage(name, msg )
 
-			def get[R]( msg :RokProxyMessage, dur :FiniteDuration )( implicit m :Manifest[R] ) = 
+			def get[R]( msg :RokProxyMessage, dur :FiniteDuration )( implicit m :Manifest[R] ) =
 				ask( server, RokProxyServerMessage.ProxyMessage(name, msg ) )( dur + 1.second ).mapTo[R]
 
 			def break = send( Break )
 
-			def interrupt( duration :FiniteDuration ) = 
+			def interrupt( duration :FiniteDuration ) =
         get[InterruptedStat]( Interrupt( duration ), duration )
 
-      def interrupt = 
+      def interrupt =
         send( Interrupt( Duration.Inf ) )
 
-      def pause( duration :FiniteDuration ) = 
+      def pause( duration :FiniteDuration ) =
         get[PausedStat]( Pause( duration ), duration )
 
       def pause = send( Pause( Duration.Inf ) )
@@ -143,18 +146,18 @@ package object rokprox {
 
       def cxn( cxnId :String ) = get[CxnStat]( GetCxn( cxnId ), defaultDur )
 
-      def cxns = get[Seq[CxnStat]]( GetAll, defaultDur) 
+      def cxns = get[Seq[CxnStat]]( GetAll, defaultDur)
 
-      def interruptCxn( cxnId :String, duration :FiniteDuration ) = 
+      def interruptCxn( cxnId :String, duration :FiniteDuration ) =
         get[InterruptedCxnStat]( InterruptCxn(cxnId,duration), duration )
 
-      def interruptCxn( cxnId :String ) = 
+      def interruptCxn( cxnId :String ) =
         send( InterruptCxn( cxnId, Duration.Inf ) )
 
-      def pauseCxn( cxnId :String, duration :FiniteDuration ) = 
+      def pauseCxn( cxnId :String, duration :FiniteDuration ) =
         get[PausedCxnStat]( PauseCxn(cxnId,duration), duration )
 
-      def pauseCxn( cxnId :String ) = 
+      def pauseCxn( cxnId :String ) =
         send( InterruptCxn( cxnId, Duration.Inf ) )
 
       def breakCxn( cxnId :String ) = get[Unit]( BreakCxn(cxnId), defaultDur )
@@ -178,30 +181,29 @@ package object rokprox {
 
     implicit def addClientBuild( b :RokProxyClientBuilder[SET] ) = new {
     	def build :RokProxyClient = {
-    		val port = scala.util.Random.nextInt(65535 - 1024) + 1024
+    		val port = new Random().nextInt(65535 - 1024) + 1024
     		val config = """
-					{
-			      akka {
-			        actor {
-			          provider = "akka.remote.RemoteActorRefProvider"
-			        }
-			        remote {
-			          transport = "akka.remote.netty.NettyRemoteTransport"
-			          netty {
-			            hostname = "127.0.0.1"
-			            port = %d
-			          }
-			       }
-			      }
-			    }
-    		""".format(port)
+           |akka {
+           |  actor {
+           |    provider = "akka.remote.RemoteActorRefProvider"
+           |  }
+           |  remote {
+           |    enabled-transports = ["akka.remote.netty.tcp"]
+           |    netty.tcp {
+           |      hostname = "127.0.0.1"
+           |      port = %s
+           |    }
+           | }
+           |}
+    		""".stripMargin.format(port)
 
     		val system = ActorSystem("rokprox", ConfigFactory.parseString(config))
 
     		new RokProxyClient {
+          import scala.concurrent.ExecutionContext.Implicits.global
     			val address = b._address.get
 
-    			def server = system.actorFor("akka://rokprox@%s/user/rokprox-server" format address)
+    			def server = system.actorFor("akka.tcp://rokprox@%s/user/rokprox-server" format address)
 
     			def shutdown = server ! RokProxyServerMessage.Shutdown
 
