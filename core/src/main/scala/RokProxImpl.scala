@@ -1,14 +1,14 @@
 package com.github.bigtoast.rokprox
 
 import akka.actor._
-import akka.util.{ Duration, FiniteDuration, ByteString }
-import akka.util.duration._
+import scala.concurrent.duration._
 import com.ticketfly.pillage.StatsContainer
 import java.util.concurrent.CountDownLatch
 import collection.immutable.Queue
-import com.eaio.uuid.UUID
 import scala.compat.Platform
 import java.net.InetSocketAddress
+import java.util.UUID
+import akka.util.ByteString
 
 
 private[rokprox] sealed trait RokProxyMessage
@@ -177,7 +177,8 @@ private[rokprox] class RokProxyActor(
         waitingOnRestore = waitingOnRestore + ( cxnId -> (cxn.info, context.sender, p, Platform.currentTime) )
         cxn.pause
       }
-      setTimer("restore-" + cxnId, ScheduledRestoreCxn(cxnId), duration, false )
+      if (duration.isFinite())
+        setTimer("restore-" + cxnId, ScheduledRestoreCxn(cxnId), FiniteDuration(duration._1, duration._2), false )
       stay
 
     case Event( i @ InterruptCxn( cxnId, duration ), _ ) =>
@@ -185,7 +186,8 @@ private[rokprox] class RokProxyActor(
         waitingOnRestore = waitingOnRestore + ( cxnId -> (cxn.info, context.sender, i, Platform.currentTime ) )
         cxn.interrupt
       }
-      setTimer("restore-" + cxnId, ScheduledRestoreCxn(cxnId), duration, false )
+      if (duration.isFinite())
+        setTimer("restore-" + cxnId, ScheduledRestoreCxn(cxnId), FiniteDuration(duration._1, duration._2), false )
       stay
 
     case Event( ScheduledRestoreCxn( cxnId ), _ ) =>

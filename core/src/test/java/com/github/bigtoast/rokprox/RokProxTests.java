@@ -5,7 +5,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import akka.actor.ActorSystem;
-import akka.util.FiniteDuration;
+import scala.concurrent.duration.FiniteDuration;
 import java.util.concurrent.TimeUnit;
 import com.github.bigtoast.rokprox.RokProx; // to appease intellij
 
